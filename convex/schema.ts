@@ -1,0 +1,172 @@
+import { defineSchema, defineTable } from "convex/server";
+import { v } from "convex/values";
+
+export default defineSchema({
+  users: defineTable({
+    clerkId: v.string(),
+
+    name: v.optional(v.string()),
+
+    email: v.optional(v.string()),
+
+    role: v.union(v.literal("user"), v.literal("admin")),
+
+    createdAt: v.number(),
+
+    updatedAt: v.number(),
+  }).index("by_clerk_id", ["clerkId"]),
+
+  tools: defineTable({
+    name: v.string(),
+
+    category: v.union(
+      v.literal("power_tools"),
+      v.literal("garden"),
+      v.literal("kitchen"),
+      v.literal("camping"),
+      v.literal("other"),
+    ),
+
+    condition: v.union(
+      v.literal("new"),
+      v.literal("good"),
+      v.literal("fair"),
+      v.literal("needs_repair"),
+    ),
+
+    description: v.string(),
+
+    ownerId: v.id("users"),
+
+    status: v.union(v.literal("active"), v.literal("archived")),
+
+    createdAt: v.number(),
+
+    updatedAt: v.number(),
+  })
+    .index("by_owner", ["ownerId"])
+    .index("by_status", ["status"])
+    .index("by_category_and_status", ["category", "status"]),
+
+  borrowRequests: defineTable({
+    toolId: v.id("tools"),
+
+    borrowerId: v.id("users"),
+
+    lenderId: v.id("users"),
+
+    startDate: v.number(),
+
+    endDate: v.number(),
+
+    status: v.union(
+      v.literal("pending"),
+      v.literal("approved"),
+      v.literal("declined"),
+      v.literal("cancelled"),
+    ),
+
+    createdAt: v.number(),
+
+    updatedAt: v.number(),
+  })
+    .index("by_borrower", ["borrowerId"])
+    .index("by_lender", ["lenderId"])
+    .index("by_tool", ["toolId"])
+    .index("by_lender_and_status", ["lenderId", "status"]),
+
+  loans: defineTable({
+    requestId: v.id("borrowRequests"),
+
+    toolId: v.id("tools"),
+
+    lenderId: v.id("users"),
+
+    borrowerId: v.id("users"),
+
+    startDate: v.number(),
+
+    dueDate: v.number(),
+
+    status: v.union(v.literal("active"), v.literal("returned")),
+
+    returnedAt: v.optional(v.number()),
+
+    createdAt: v.number(),
+
+    updatedAt: v.number(),
+  })
+    .index("by_request", ["requestId"])
+    .index("by_borrower", ["borrowerId"])
+    .index("by_lender", ["lenderId"])
+    .index("by_tool", ["toolId"])
+    .index("by_status_and_due_date", ["status", "dueDate"]),
+
+  trustedLenders: defineTable({
+    userId: v.id("users"),
+
+    grantedBy: v.id("users"),
+
+    status: v.union(v.literal("active"), v.literal("revoked")),
+
+    reason: v.optional(v.string()),
+
+    createdAt: v.number(),
+
+    updatedAt: v.number(),
+  })
+    .index("by_user", ["userId"])
+    .index("by_status", ["status"])
+    .index("by_user_and_status", ["userId", "status"]),
+
+  automationEvents: defineTable({
+    eventType: v.union(
+      v.literal("request_created"),
+      v.literal("request_approved"),
+      v.literal("request_declined"),
+      v.literal("overdue_reminder"),
+    ),
+
+    relatedRequestId: v.optional(v.id("borrowRequests")),
+
+    relatedLoanId: v.optional(v.id("loans")),
+
+    recipientId: v.id("users"),
+
+    status: v.union(
+      v.literal("pending"),
+      v.literal("processing"),
+      v.literal("succeeded"),
+      v.literal("failed"),
+    ),
+
+    attemptCount: v.number(),
+
+    lastAttemptAt: v.optional(v.number()),
+
+    completedAt: v.optional(v.number()),
+
+    errorMessage: v.optional(v.string()),
+
+    createdAt: v.number(),
+
+    updatedAt: v.number(),
+  })
+    .index("by_status", ["status"])
+    .index("by_request", ["relatedRequestId"])
+    .index("by_loan", ["relatedLoanId"])
+    .index("by_recipient", ["recipientId"])
+    .index("by_loan_and_status", ["relatedLoanId", "status"]),
+
+  processedEvents: defineTable({
+    eventId: v.string(),
+
+    eventType: v.string(),
+
+    processedAt: v.number(),
+
+    result: v.union(v.literal("succeeded"), v.literal("duplicate")),
+  })
+    .index("by_event_id", ["eventId"])
+    .index("by_processed_at", ["processedAt"]),
+});

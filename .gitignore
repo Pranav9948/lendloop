@@ -39,3 +39,26 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+
+
+# AI agent generated files
+.agents/
+.claude/
+skills-lock.json
+AGENTS.md
+CLAUDE.md
+
+# Local environment variables
+.env
+.env.*
+!.env.example
+
+
+# Environment templates safe to commit
+!.env.example
+!.env.production.example
+
+
+# Safe n8n environment template
+!n8n/.env.example
