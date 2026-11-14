@@ -1,154 +1,51 @@
-import {
-  ArrowRight,
-  Drill,
-  Leaf,
-  Package,
-  ShieldCheck,
-  Wrench,
-} from "lucide-react";
-import Link from "next/link";
-
-const featuredTools = [
-  {
-    name: "Power Drill",
-    category: "Power tools",
-    icon: Drill,
-    color: "bg-blue-50 text-blue-600",
-  },
-  {
-    name: "Garden Kit",
-    category: "Gardening",
-    icon: Leaf,
-    color: "bg-green-50 text-green-600",
-  },
-  {
-    name: "Toolbox",
-    category: "Hand tools",
-    icon: Wrench,
-    color: "bg-orange-50 text-orange-600",
-  },
-];
+import { ArrowDown, ArrowRight, Leaf, ShieldCheck, Sparkles } from "lucide-react";
+import Image from "next/image";
 
 export function HeroSection() {
   return (
-    <section className="relative overflow-hidden bg-background">
-      <div className="mx-auto grid max-w-7xl items-center gap-16 px-4 py-20 sm:px-6 sm:py-28 lg:grid-cols-2 lg:px-8">
-        {/* Left: Hero content */}
-        <div className="relative z-10">
-          <div className="mb-7 inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/5 px-4 py-2">
-            <span className="size-2 rounded-full bg-primary" />
-            <span className="text-sm font-semibold text-primary">
-              Share more. Own less.
-            </span>
+    <section className="overflow-hidden bg-[#f7f8f4]">
+      <div className="mx-auto grid max-w-[1440px] items-center gap-12 px-5 py-12 sm:px-8 sm:py-16 lg:grid-cols-[0.88fr_1.12fr] lg:gap-10 lg:px-12 lg:py-20 xl:px-16">
+        <div className="relative z-10 max-w-2xl">
+          <div className="mb-7 inline-flex items-center gap-2 rounded-full border border-[#167a5b]/15 bg-white/80 px-3.5 py-2 shadow-sm">
+            <span className="flex size-6 items-center justify-center rounded-full bg-[#e7f1e8] text-[#167a5b]"><Leaf size={14} /></span>
+            <span className="text-xs font-semibold tracking-wide text-[#20352b] sm:text-sm">GOOD NEIGHBORS SHARE</span>
           </div>
-
-          <h1 className="max-w-xl text-5xl font-bold leading-[1.12] tracking-tight text-foreground sm:text-6xl lg:text-7xl">
-            Borrow what you need.
-            <span className="mt-2 block text-primary">
-              Lend what you don&apos;t.
-            </span>
+          <h1 className="max-w-[650px] text-[clamp(2.7rem,11vw,5.8rem)] font-semibold leading-[0.99] tracking-[-0.065em] text-[#20352b] sm:text-[clamp(3.5rem,7vw,5.8rem)]">
+            Big projects.
+            <span className="mt-1 block font-serif font-medium italic tracking-[-0.055em] text-[#167a5b]">No big purchases.</span>
           </h1>
-
-          <p className="mt-7 max-w-lg text-base leading-8 text-muted sm:text-lg">
-            Your neighborhood has tools you need. Share useful equipment, borrow
-            from people nearby, and make better use of what we already own.
+          <p className="mt-6 max-w-[490px] text-base leading-7 text-[#647268] sm:mt-7 sm:text-lg sm:leading-8">
+            The right tool might be just around the corner. Borrow from your neighbors, lend what you have, and get more out of the things we already own.
           </p>
-
-          <div className="mt-9 flex flex-col gap-3 sm:flex-row">
-            <Link
-              href="/sign-up"
-              className="inline-flex items-center justify-center gap-2 rounded-xl bg-primary px-6 py-3.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-primary-hover"
-            >
-              Get started
-              <ArrowRight size={18} />
-            </Link>
-
-            <Link
-              href="#tools"
-              className="inline-flex items-center justify-center rounded-xl border border-border bg-white px-6 py-3.5 text-sm font-semibold text-foreground transition-colors hover:bg-gray-50"
-            >
-              Explore tools
-            </Link>
+          <div className="mt-7 flex flex-col gap-3 min-[420px]:flex-row sm:mt-8">
+            <a href="#tools" className="group inline-flex min-h-14 items-center justify-center gap-3 rounded-full bg-[#167a5b] px-6 text-sm font-semibold text-white shadow-[0_8px_22px_rgba(22,122,91,0.18)] transition-all hover:-translate-y-0.5 hover:bg-[#116449] sm:px-7">
+              Find your next tool <ArrowRight className="transition-transform group-hover:translate-x-1" size={17} />
+            </a>
+            <a href="#how-it-works" className="inline-flex min-h-14 items-center justify-center gap-2 rounded-full border border-[#dce4dd] bg-white/75 px-6 text-sm font-semibold text-[#20352b] transition-colors hover:bg-white sm:px-7">
+              How it works <ArrowDown size={16} />
+            </a>
           </div>
-
-          <div className="mt-10 flex items-center gap-3 text-sm text-muted">
-            <ShieldCheck size={20} className="shrink-0 text-primary" />
-            <span>Community sharing with user-controlled listings</span>
+          <div className="mt-8 flex items-center gap-3 text-sm text-[#68766c] sm:mt-9">
+            <span className="flex size-9 items-center justify-center rounded-full bg-[#e6efe7] text-[#167a5b]"><ShieldCheck size={18} /></span>
+            <span>Neighbor-powered sharing, on your terms.</span>
           </div>
         </div>
-
-        {/* Right: Illustrative tool-sharing visual */}
-        <div className="relative mx-auto w-full max-w-lg">
-          <div className="absolute -inset-8 rounded-full bg-primary/5 blur-3xl" />
-
-          <div className="relative rounded-3xl border border-border bg-white p-6 shadow-xl sm:p-8">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-muted">
-                  The sharing community
-                </p>
-                <h2 className="mt-1 text-xl font-bold text-foreground">
-                  Useful things, shared.
-                </h2>
+        <div className="relative mx-auto w-full max-w-[760px] lg:ml-auto">
+          <div className="absolute -right-14 -top-16 size-64 rounded-full bg-[#e5eddf] blur-3xl" />
+          <div className="relative h-[340px] overflow-hidden rounded-[1.6rem] bg-[#dfe8dc] shadow-[0_28px_70px_rgba(32,53,43,0.14)] sm:h-[480px] sm:rounded-[2rem] lg:h-[540px]">
+            <Image src="/images/lendloop-community-hero.png" alt="Neighbors sharing a cordless drill in a sunny garden" fill priority sizes="(max-width: 1024px) 100vw, 58vw" className="object-cover object-center" />
+            <div className="absolute inset-0 bg-gradient-to-t from-[#15271e]/45 via-transparent to-[#15271e]/5" />
+            <div className="absolute bottom-5 left-5 right-5 flex items-end justify-between gap-4 sm:bottom-8 sm:left-8 sm:right-8">
+              <div className="max-w-xs text-white">
+                <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-white/75 sm:text-xs">A little closer to home</p>
+                <p className="mt-2 text-xl font-medium leading-tight tracking-tight sm:text-3xl">Good things happen when we share.</p>
               </div>
-
-              <div className="flex size-12 items-center justify-center rounded-2xl bg-primary/10 text-primary">
-                <Package size={25} />
-              </div>
-            </div>
-
-            <div className="mt-8 space-y-4">
-              {featuredTools.map((tool) => {
-                const Icon = tool.icon;
-
-                return (
-                  <div
-                    key={tool.name}
-                    className="flex items-center gap-4 rounded-2xl border border-border p-4 transition-transform hover:translate-x-1"
-                  >
-                    <div
-                      className={`flex size-12 shrink-0 items-center justify-center rounded-xl ${tool.color}`}
-                    >
-                      <Icon size={23} />
-                    </div>
-
-                    <div>
-                      <h3 className="font-semibold text-foreground">
-                        {tool.name}
-                      </h3>
-                      <p className="mt-1 text-sm text-muted">{tool.category}</p>
-                    </div>
-
-                    <div className="ml-auto">
-                      <ArrowRight size={18} className="text-muted" />
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-
-            <div className="mt-6 rounded-2xl bg-primary/5 p-5">
-              <p className="text-sm font-semibold text-foreground">
-                One community. More possibilities.
-              </p>
-              <p className="mt-1 text-sm leading-6 text-muted">
-                Borrow responsibly and help useful tools reach more people.
-              </p>
+              <span className="hidden size-12 shrink-0 items-center justify-center rounded-full border border-white/30 bg-white/15 text-white backdrop-blur sm:flex"><Sparkles size={20} /></span>
             </div>
           </div>
-
-          <div className="absolute -bottom-6 -left-5 hidden rounded-2xl border border-border bg-white p-4 shadow-lg sm:block">
-            <div className="flex items-center gap-3">
-              <div className="flex size-10 items-center justify-center rounded-full bg-primary/10 text-primary">
-                <ShieldCheck size={21} />
-              </div>
-              <div>
-                <p className="text-sm font-bold text-foreground">
-                  Built for trust
-                </p>
-                <p className="text-xs text-muted">Community first</p>
-              </div>
-            </div>
+          <div className="absolute -left-2 top-5 flex items-center gap-2.5 rounded-2xl border border-white/80 bg-white/95 px-3 py-2.5 shadow-[0_12px_35px_rgba(32,53,43,0.12)] sm:-left-8 sm:top-10 sm:gap-3 sm:px-5 sm:py-4">
+            <span className="flex size-9 items-center justify-center rounded-full bg-[#e8f1e8] text-[#167a5b] sm:size-10"><Leaf size={18} /></span>
+            <div><p className="text-[11px] font-medium text-[#79847a] sm:text-xs">Share locally</p><p className="mt-0.5 text-xs font-semibold text-[#25392e] sm:text-sm">Make more, together</p></div>
           </div>
         </div>
       </div>

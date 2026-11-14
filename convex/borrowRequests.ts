@@ -28,6 +28,9 @@ export const getMyRequests = query({
             ? {
                 name: tool.name,
                 category: tool.category,
+                imageUrl: tool.imageId
+                  ? await ctx.storage.getUrl(tool.imageId)
+                  : null,
               }
             : null,
         };
@@ -67,6 +70,9 @@ export const getIncomingRequests = query({
             ? {
                 name: tool.name,
                 category: tool.category,
+                imageUrl: tool.imageId
+                  ? await ctx.storage.getUrl(tool.imageId)
+                  : null,
               }
             : null,
 
@@ -357,5 +363,50 @@ export const cancelBorrowRequest = mutation({
     });
 
     return request._id;
+  },
+});
+
+export const getUnavailableDates = query({
+  args: {
+    toolId: v.id("tools"),
+  },
+  handler: async (ctx, args) => {
+    await requireCurrentUser(ctx);
+
+    const tool = await ctx.db.get(args.toolId);
+
+    if (!tool || tool.status !== "active") {
+      throw new Error("This tool is no longer available.");
+    }
+
+    const [requests, loans] = await Promise.all([
+      ctx.db
+        .query("borrowRequests")
+        .withIndex("by_tool", (q) => q.eq("toolId", args.toolId))
+        .collect(),
+
+      ctx.db
+        .query("loans")
+        .withIndex("by_tool", (q) => q.eq("toolId", args.toolId))
+        .collect(),
+    ]);
+
+    const pendingRanges = requests
+      .filter((request) => request.status === "pending")
+      .map((request) => ({
+        startDate: request.startDate,
+        endDate: request.endDate,
+      }));
+
+    const activeLoanRanges = loans
+      .filter((loan) => loan.status === "active")
+      .map((loan) => ({
+        startDate: loan.startDate,
+        endDate: loan.dueDate,
+      }));
+
+    return {
+      unavailableRanges: [...pendingRanges, ...activeLoanRanges],
+    };
   },
 });

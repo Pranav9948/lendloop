@@ -47,6 +47,9 @@ export const getMyLoans = query({
             ? {
                 name: tool.name,
                 category: tool.category,
+                imageUrl: tool.imageId
+                  ? await ctx.storage.getUrl(tool.imageId)
+                  : null,
               }
             : null,
         };

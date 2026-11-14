@@ -1,30 +1,25 @@
 @import "tailwindcss";
 
 :root {
-  --background: #f7f9fc;
-  --foreground: #172b4d;
-
-  --primary: #16a085;
-  --primary-hover: #12836d;
-
+  --background: #f6f8f7;
+  --foreground: #172b25;
+  --primary: #167a5b;
+  --primary-hover: #116449;
   --surface: #ffffff;
-  --muted: #64748b;
-  --border: #e2e8f0;
-
-  --radius: 0.75rem;
+  --muted: #697871;
+  --border: #e3e9e6;
+  --radius: 0.9rem;
+  --ring: #167a5b;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-
   --color-primary: var(--primary);
   --color-primary-hover: var(--primary-hover);
-
   --color-surface: var(--surface);
   --color-muted: var(--muted);
   --color-border: var(--border);
-
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }
@@ -32,19 +27,86 @@
 * {
   box-sizing: border-box;
 }
-
 html {
   scroll-behavior: smooth;
 }
-
 body {
   min-height: 100vh;
   background: var(--background);
   color: var(--foreground);
   font-family: var(--font-geist-sans), sans-serif;
+  -webkit-font-smoothing: antialiased;
 }
-
 button,
 a {
   -webkit-tap-highlight-color: transparent;
+}
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+:focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--primary) 38%, transparent);
+  outline-offset: 2px;
+}
+::selection {
+  color: #103d2f;
+  background: #c8e8dc;
+}
+
+/* Shared finishing layer keeps existing forms, tables, dialogs, and routes cohesive. */
+input:not([type="checkbox"]):not([type="radio"]),
+select,
+textarea {
+  max-width: 100%;
+  border-color: var(--border);
+  border-radius: 0.7rem;
+  background-color: #fff;
+  color: var(--foreground);
+  transition:
+    border-color 150ms ease,
+    box-shadow 150ms ease;
+}
+input:focus,
+select:focus,
+textarea:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 12%, transparent);
+  outline: none;
+}
+table {
+  border-collapse: collapse;
+}
+thead {
+  background: #f7f9f8;
+}
+th {
+  font-weight: 600;
+  letter-spacing: 0.035em;
+  text-transform: uppercase;
+}
+tbody tr {
+  transition: background-color 140ms ease;
+}
+tbody tr:hover {
+  background-color: #f8faf9;
+}
+
+/* Unavailable dates in the borrowing calendar */
+.availability-unavailable button {
+  background: #fee2e2 !important;
+  color: #b91c1c !important;
+  text-decoration: line-through;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
 }

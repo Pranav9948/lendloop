@@ -61,7 +61,7 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
       <div className="flex min-w-0 flex-1 flex-col">
         <DashboardHeader onMenuClick={() => setMobileMenuOpen(true)} />
 
-        <main className="flex-1 p-5 sm:p-8">{children}</main>
+        <main className="mx-auto w-full max-w-[1600px] flex-1 p-4 sm:p-6 lg:p-8">{children}</main>
       </div>
     </div>
   );

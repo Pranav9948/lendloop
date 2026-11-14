@@ -4,6 +4,7 @@
 import { useMutation } from "convex/react";
 import { useState } from "react";
 
+import { Package } from "lucide-react";
 import Image from "next/image";
 import { api } from "../../../convex/_generated/api";
 import type { Id } from "../../../convex/_generated/dataModel";
@@ -191,20 +192,25 @@ export function EditToolForm({
           Current photograph
         </p>
 
-        {tool.imageUrl ? (
-          <Image
-            src={tool.imageUrl}
-            alt={tool.name}
-            width={600}
-            height={450}
-            unoptimized
-            className="h-full w-full object-contain p-3"
-          />
-        ) : (
-          <div className="text-sm text-muted">
-            No photograph available
-          </div>
-        )}
+        <div className="overflow-hidden rounded-xl border border-[#e5ebe5] bg-[#f7f8f5]">
+          {tool.imageUrl ? (
+            <div className="relative flex h-44 w-full items-center justify-center p-4">
+              <Image
+                src={tool.imageUrl}
+                alt={tool.name}
+                fill
+                unoptimized
+                sizes="(max-width: 640px) 100vw, 400px"
+                className="object-contain p-4"
+              />
+            </div>
+          ) : (
+            <div className="flex h-44 flex-col items-center justify-center gap-2 text-[#89958c]">
+              <Package size={28} />
+              <span className="text-xs">No photograph available</span>
+            </div>
+          )}
+        </div>
 
         <p className="text-sm font-medium text-foreground">
           Replace photograph (optional)

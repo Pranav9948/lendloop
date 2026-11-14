@@ -59,17 +59,19 @@ export function DashboardSidebar({ onNavigate }: DashboardSidebarProps) {
   const isAdmin = profile?.role === "admin";
 
   return (
-    <aside className="flex h-full w-64 shrink-0 flex-col border-r border-border bg-white">
+    <aside className="flex h-full w-[17rem] shrink-0 flex-col border-r border-border bg-white">
       {/* Brand */}
-      <div className="flex h-16 items-center gap-2 border-b border-border px-6">
-        <span className="flex size-9 items-center justify-center rounded-xl bg-primary text-white">
-          <Package size={21} />
-        </span>
+      <Link href={"/dashboard"}>
+        <div className="flex h-16 items-center gap-2 border-b border-border px-6">
+          <span className="flex size-9 items-center justify-center rounded-xl bg-primary text-white">
+            <Package size={21} />
+          </span>
 
-        <span className="text-xl font-bold tracking-tight text-foreground">
-          Lend<span className="text-primary">Loop</span>
-        </span>
-      </div>
+          <span className="text-xl font-bold tracking-tight text-foreground">
+            Lend<span className="text-primary">Loop</span>
+          </span>
+        </div>
+      </Link>
 
       {/* Navigation */}
       <nav className="flex-1 space-y-1 overflow-y-auto px-3 py-6">
@@ -90,11 +92,10 @@ export function DashboardSidebar({ onNavigate }: DashboardSidebarProps) {
               key={item.href}
               href={item.href}
               onClick={onNavigate}
-              className={`flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-medium transition-colors ${
-                isActive
-                  ? "bg-primary/10 text-primary"
-                  : "text-muted hover:bg-gray-50 hover:text-foreground"
-              }`}
+              className={`flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-medium transition-colors ${isActive
+                ? "bg-primary/10 text-primary"
+                : "text-muted hover:bg-gray-50 hover:text-foreground"
+                }`}
             >
               <Icon size={19} />
               <span>{item.label}</span>
@@ -111,12 +112,11 @@ export function DashboardSidebar({ onNavigate }: DashboardSidebarProps) {
             <Link
               href="/dashboard/admin"
               onClick={onNavigate}
-              className={`flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-medium transition-colors ${
-                pathname === "/dashboard/admin" ||
+              className={`flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-medium transition-colors ${pathname === "/dashboard/admin" ||
                 pathname.startsWith("/dashboard/admin/")
-                  ? "bg-primary/10 text-primary"
-                  : "text-muted hover:bg-gray-50 hover:text-foreground"
-              }`}
+                ? "bg-primary/10 text-primary"
+                : "text-muted hover:bg-gray-50 hover:text-foreground"
+                }`}
             >
               <ShieldCheck size={19} />
               <span>Admin Dashboard</span>

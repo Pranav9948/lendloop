@@ -237,6 +237,7 @@ export const getAllActiveTools = query({
         status: tool.status,
         createdAt: tool.createdAt,
         imageUrl: tool.imageId ? await ctx.storage.getUrl(tool.imageId) : null,
+        ownerId: tool.ownerId,
       })),
     );
   },

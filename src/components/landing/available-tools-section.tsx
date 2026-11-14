@@ -40,7 +40,7 @@ export function AvailableToolsSection() {
   const tools = useQuery(api.tools.getPublicTools);
 
   return (
-    <section id="tools" className="bg-white py-20 sm:py-28">
+    <section id="tools" className="bg-white py-16 sm:py-24">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="flex flex-col justify-between gap-5 sm:flex-row sm:items-end">
           <div>
@@ -87,7 +87,7 @@ export function AvailableToolsSection() {
               return (
                 <article
                   key={`${tool.name}-${index}`}
-                  className="rounded-2xl border border-border bg-white p-6 transition-all hover:-translate-y-1 hover:shadow-lg"
+                  className="group rounded-2xl border border-border bg-white p-6 shadow-[0_2px_10px_rgba(23,43,37,0.03)] transition-all duration-200 hover:-translate-y-1 hover:border-primary/30 hover:shadow-[0_14px_34px_rgba(23,43,37,0.09)]"
                 >
                   <div className="flex size-12 items-center justify-center rounded-xl bg-primary/10 text-primary">
                     <Icon size={24} />

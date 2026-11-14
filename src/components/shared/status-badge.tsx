@@ -13,6 +13,7 @@ const statusStyles: Record<string, string> = {
   processing: "bg-blue-50 text-blue-700",
   succeeded: "bg-green-50 text-green-700",
   failed: "bg-red-50 text-red-700",
+  overdue: "bg-red-50 text-red-700",
 };
 
 export function StatusBadge({ status }: StatusBadgeProps) {
