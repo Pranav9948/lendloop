@@ -36,6 +36,8 @@ export default defineSchema({
 
     description: v.string(),
 
+    imageId: v.optional(v.id("_storage")),
+
     ownerId: v.id("users"),
 
     status: v.union(v.literal("active"), v.literal("archived")),
