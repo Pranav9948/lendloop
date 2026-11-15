@@ -95,6 +95,7 @@ export const createTool = mutation({
       imageId: args.imageId,
       ownerId: user._id,
       status: "active",
+      searchText: `${name} ${args.category} ${args.condition}`.toLowerCase(),
       createdAt: now,
       updatedAt: now,
     });
@@ -141,6 +142,7 @@ export const updateTool = mutation({
       name,
       category: args.category,
       condition: args.condition,
+      searchText: `${name} ${args.category} ${args.condition}`.toLowerCase(),
       description,
       ...(args.imageId ? { imageId: args.imageId } : {}),
       updatedAt: now,

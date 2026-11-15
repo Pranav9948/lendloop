@@ -8,13 +8,48 @@ export default defineSchema({
     name: v.optional(v.string()),
 
     email: v.optional(v.string()),
-
+    isTrusted: v.optional(v.boolean()),
     role: v.union(v.literal("user"), v.literal("admin")),
+    searchText: v.optional(v.string()),
 
     createdAt: v.number(),
 
     updatedAt: v.number(),
-  }).index("by_clerk_id", ["clerkId"]),
+  })
+    .index("by_clerk_id", ["clerkId"])
+    .index("by_created_at", ["createdAt"])
+    .searchIndex("search_users", {
+      searchField: "searchText",
+      filterFields: ["role", "isTrusted"],
+    }),
+
+  notifications: defineTable({
+    userId: v.id("users"),
+
+    type: v.union(
+      v.literal("request_created"),
+      v.literal("request_approved"),
+      v.literal("request_declined"),
+      v.literal("overdue_reminder"),
+    ),
+
+    title: v.string(),
+
+    message: v.string(),
+
+    relatedRequestId: v.optional(v.id("borrowRequests")),
+
+    relatedLoanId: v.optional(v.id("loans")),
+
+    automationEventId: v.string(),
+
+    isRead: v.boolean(),
+
+    createdAt: v.number(),
+  })
+    .index("by_user", ["userId"])
+    .index("by_user_and_read", ["userId", "isRead"])
+    .index("by_automation_event", ["automationEventId"]),
 
   tools: defineTable({
     name: v.string(),
@@ -27,6 +62,7 @@ export default defineSchema({
       v.literal("other"),
     ),
 
+    searchText: v.optional(v.string()),
     condition: v.union(
       v.literal("new"),
       v.literal("good"),
@@ -48,7 +84,12 @@ export default defineSchema({
   })
     .index("by_owner", ["ownerId"])
     .index("by_status", ["status"])
-    .index("by_category_and_status", ["category", "status"]),
+    .index("by_category_and_status", ["category", "status"])
+    .index("by_created_at", ["createdAt"])
+    .searchIndex("search_tools", {
+      searchField: "searchText",
+      filterFields: ["category", "condition", "status"],
+    }),
 
   borrowRequests: defineTable({
     toolId: v.id("tools"),
@@ -85,7 +126,7 @@ export default defineSchema({
     lenderId: v.id("users"),
 
     borrowerId: v.id("users"),
-
+    searchText: v.optional(v.string()),
     startDate: v.number(),
 
     dueDate: v.number(),
@@ -102,7 +143,12 @@ export default defineSchema({
     .index("by_borrower", ["borrowerId"])
     .index("by_lender", ["lenderId"])
     .index("by_tool", ["toolId"])
-    .index("by_status_and_due_date", ["status", "dueDate"]),
+    .index("by_status_and_due_date", ["status", "dueDate"])
+    .index("by_created_at", ["createdAt"])
+    .searchIndex("search_loans", {
+      searchField: "searchText",
+      filterFields: ["status"],
+    }),
 
   trustedLenders: defineTable({
     userId: v.id("users"),
@@ -127,6 +173,10 @@ export default defineSchema({
       v.literal("request_approved"),
       v.literal("request_declined"),
       v.literal("overdue_reminder"),
+    ),
+
+    reminderStage: v.optional(
+      v.union(v.literal("day_1"), v.literal("day_3"), v.literal("day_7")),
     ),
 
     relatedRequestId: v.optional(v.id("borrowRequests")),
@@ -167,7 +217,11 @@ export default defineSchema({
 
     processedAt: v.number(),
 
-    result: v.union(v.literal("succeeded"), v.literal("duplicate")),
+    status: v.union(
+      v.literal("processing"),
+      v.literal("succeeded"),
+      v.literal("failed"),
+    ),
   })
     .index("by_event_id", ["eventId"])
     .index("by_processed_at", ["processedAt"]),

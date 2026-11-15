@@ -25,6 +25,7 @@ export const getOrCreateCurrentUser = mutation({
       const updates: {
         name?: string;
         email?: string;
+        searchText?: string;
         updatedAt?: number;
       } = {};
 
@@ -38,6 +39,11 @@ export const getOrCreateCurrentUser = mutation({
       ) {
         updates.email = identity.email;
       }
+
+      const nextName = identity.name ?? existingUser.name ?? "";
+      const nextEmail = identity.email ?? existingUser.email ?? "";
+
+      updates.searchText = `${nextName} ${nextEmail}`.toLowerCase();
 
       if (Object.keys(updates).length > 0) {
         updates.updatedAt = now;
@@ -59,6 +65,8 @@ export const getOrCreateCurrentUser = mutation({
       role: "user",
       createdAt: now,
       updatedAt: now,
+      searchText:
+        `${identity.name ?? ""} ${identity.email ?? ""}`.toLowerCase(),
 
       ...(identity.name !== undefined ? { name: identity.name } : {}),
 

@@ -3,6 +3,7 @@
 
 import { UserButton } from "@clerk/nextjs";
 import { Menu, Search } from "lucide-react";
+import NotificationBell from "../notifications/NotificationBell";
 
 interface DashboardHeaderProps {
   onMenuClick: () => void;
@@ -34,6 +35,9 @@ export function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
       </div>
 
       {/* Right side */}
+
+
+      {/* Right side */}
       <div className="flex items-center gap-3">
 
         <button
@@ -44,13 +48,18 @@ export function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
           <Search size={19} strokeWidth={1.8} />
         </button>
 
+        {/* Notifications */}
+        <NotificationBell />
+
         <div className="mx-1 h-7 w-px bg-[#edf0eb]" />
 
+        {/* User profile */}
         <div className="rounded-full border border-[#e9eee8] p-0.5 transition-shadow hover:shadow-sm">
           <UserButton />
         </div>
 
       </div>
+
     </header>
   );
 }

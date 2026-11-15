@@ -13,11 +13,13 @@ import type * as authTest from "../authTest.js";
 import type * as automation from "../automation.js";
 import type * as automationMutations from "../automationMutations.js";
 import type * as borrowRequests from "../borrowRequests.js";
+import type * as crons from "../crons.js";
 import type * as dashboard from "../dashboard.js";
 import type * as http from "../http.js";
 import type * as lib_auth from "../lib/auth.js";
 import type * as lib_automation from "../lib/automation.js";
 import type * as loans from "../loans.js";
+import type * as notifications from "../notifications.js";
 import type * as tools from "../tools.js";
 import type * as users from "../users.js";
 
@@ -33,11 +35,13 @@ declare const fullApi: ApiFromModules<{
   automation: typeof automation;
   automationMutations: typeof automationMutations;
   borrowRequests: typeof borrowRequests;
+  crons: typeof crons;
   dashboard: typeof dashboard;
   http: typeof http;
   "lib/auth": typeof lib_auth;
   "lib/automation": typeof lib_automation;
   loans: typeof loans;
+  notifications: typeof notifications;
   tools: typeof tools;
   users: typeof users;
 }>;

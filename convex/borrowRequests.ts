@@ -256,6 +256,21 @@ export const approveBorrowRequest = mutation({
       );
     }
 
+    const [borrower, lender] = await Promise.all([
+      ctx.db.get("users", request.borrowerId),
+      ctx.db.get("users", request.lenderId),
+    ]);
+
+    const loanSearchText = [
+      tool.name,
+      borrower?.name ?? "",
+      borrower?.email ?? "",
+      lender?.name ?? "",
+      lender?.email ?? "",
+    ]
+      .join(" ")
+      .toLowerCase();
+
     // 8. Create the loan
     const now = Date.now();
 
@@ -267,6 +282,7 @@ export const approveBorrowRequest = mutation({
       startDate: request.startDate,
       dueDate: request.endDate,
       status: "active",
+      searchText: loanSearchText,
       createdAt: now,
       updatedAt: now,
     });

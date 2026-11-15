@@ -8,11 +8,14 @@ type AutomationEventType =
   | "request_declined"
   | "overdue_reminder";
 
+type ReminderStage = "day_1" | "day_3" | "day_7";
+
 type CreateAutomationEventArgs = {
   eventType: AutomationEventType;
   recipientId: Id<"users">;
   relatedRequestId?: Id<"borrowRequests">;
   relatedLoanId?: Id<"loans">;
+  reminderStage?: ReminderStage;
 };
 
 export async function createAutomationEvent(
@@ -29,6 +32,9 @@ export async function createAutomationEvent(
     }),
     ...(args.relatedLoanId && {
       relatedLoanId: args.relatedLoanId,
+    }),
+    ...(args.reminderStage && {
+      reminderStage: args.reminderStage,
     }),
     status: "pending",
     attemptCount: 0,

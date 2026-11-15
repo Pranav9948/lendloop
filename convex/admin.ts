@@ -1,3 +1,4 @@
+import { paginationOptsValidator } from "convex/server";
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
 import { requireAdmin } from "./lib/auth";
@@ -71,6 +72,8 @@ export const grantTrustedLender = mutation({
       .unique();
 
     if (existingActiveRecord) {
+      await ctx.db.patch(args.userId, { isTrusted: true });
+
       return {
         success: true,
         alreadyTrusted: true,
@@ -86,6 +89,10 @@ export const grantTrustedLender = mutation({
       reason: args.reason,
       createdAt: now,
       updatedAt: now,
+    });
+
+    await ctx.db.patch(args.userId, {
+      isTrusted: true,
     });
 
     return {
@@ -121,6 +128,10 @@ export const revokeTrustedLender = mutation({
     await ctx.db.patch(activeRecord._id, {
       status: "revoked",
       updatedAt: Date.now(),
+    });
+
+    await ctx.db.patch(args.userId, {
+      isTrusted: false,
     });
 
     return {
@@ -282,5 +293,211 @@ export const getAllToolsWithDetails = query({
     );
 
     return toolsWithDetails.sort((a, b) => b.createdAt - a.createdAt);
+  },
+});
+
+export const getPaginatedTools = query({
+  args: {
+    paginationOpts: paginationOptsValidator,
+    search: v.optional(v.string()),
+    category: v.optional(
+      v.union(
+        v.literal("power_tools"),
+        v.literal("garden"),
+        v.literal("kitchen"),
+        v.literal("camping"),
+        v.literal("other"),
+      ),
+    ),
+    condition: v.optional(
+      v.union(
+        v.literal("new"),
+        v.literal("good"),
+        v.literal("fair"),
+        v.literal("needs_repair"),
+      ),
+    ),
+    status: v.optional(v.union(v.literal("active"), v.literal("archived"))),
+  },
+
+  handler: async (ctx, args) => {
+    await requireAdmin(ctx);
+
+    const search = args.search?.trim();
+
+    const baseQuery = search
+      ? ctx.db
+          .query("tools")
+          .withSearchIndex("search_tools", (q) =>
+            q.search("searchText", search),
+          )
+      : ctx.db.query("tools").withIndex("by_created_at");
+
+    const results =
+      args.category || args.condition || args.status
+        ? await baseQuery
+            .filter((q) =>
+              q.and(
+                ...(args.category
+                  ? [q.eq(q.field("category"), args.category)]
+                  : []),
+                ...(args.condition
+                  ? [q.eq(q.field("condition"), args.condition)]
+                  : []),
+                ...(args.status ? [q.eq(q.field("status"), args.status)] : []),
+              ),
+            )
+            .paginate(args.paginationOpts)
+        : await baseQuery.paginate(args.paginationOpts);
+
+    const page = await Promise.all(
+      results.page.map(async (tool) => {
+        const owner = await ctx.db.get("users", tool.ownerId);
+
+        return {
+          _id: tool._id,
+          name: tool.name,
+          category: tool.category,
+          condition: tool.condition,
+          description: tool.description,
+          status: tool.status,
+          createdAt: tool.createdAt,
+          imageUrl: tool.imageId
+            ? await ctx.storage.getUrl(tool.imageId)
+            : null,
+          owner: owner
+            ? {
+                name: owner.name ?? "LendLoop member",
+                email: owner.email,
+              }
+            : null,
+        };
+      }),
+    );
+
+    return { ...results, page };
+  },
+});
+
+export const getPaginatedLoans = query({
+  args: {
+    paginationOpts: paginationOptsValidator,
+    search: v.optional(v.string()),
+    status: v.optional(
+      v.union(v.literal("active"), v.literal("returned"), v.literal("overdue")),
+    ),
+  },
+
+  handler: async (ctx, args) => {
+    await requireAdmin(ctx);
+
+    const search = args.search?.trim();
+    const now = Date.now();
+
+    const baseQuery = search
+      ? ctx.db
+          .query("loans")
+          .withSearchIndex("search_loans", (q) =>
+            q.search("searchText", search),
+          )
+      : ctx.db.query("loans").withIndex("by_created_at");
+
+    const results =
+      args.status === "overdue"
+        ? await baseQuery
+            .filter((q) =>
+              q.and(
+                q.eq(q.field("status"), "active"),
+                q.lt(q.field("dueDate"), now),
+              ),
+            )
+            .paginate(args.paginationOpts)
+        : args.status
+          ? await baseQuery
+              .filter((q) => q.eq(q.field("status"), args.status!))
+              .paginate(args.paginationOpts)
+          : await baseQuery.paginate(args.paginationOpts);
+
+    const page = await Promise.all(
+      results.page.map(async (loan) => {
+        const [tool, borrower, lender] = await Promise.all([
+          ctx.db.get("tools", loan.toolId),
+          ctx.db.get("users", loan.borrowerId),
+          ctx.db.get("users", loan.lenderId),
+        ]);
+
+        return {
+          _id: loan._id,
+          startDate: loan.startDate,
+          dueDate: loan.dueDate,
+          returnedAt: loan.returnedAt,
+          status: loan.status,
+          createdAt: loan.createdAt,
+          isOverdue: loan.status === "active" && loan.dueDate < now,
+
+          tool: tool ? { name: tool.name, category: tool.category } : null,
+
+          borrower: borrower
+            ? { name: borrower.name ?? "LendLoop member" }
+            : null,
+
+          lender: lender
+            ? {
+                name: lender.name ?? "Unknown lender",
+                email: lender.email,
+              }
+            : null,
+        };
+      }),
+    );
+
+    return { ...results, page };
+  },
+});
+
+export const getPaginatedUsers = query({
+  args: {
+    paginationOpts: paginationOptsValidator,
+    search: v.optional(v.string()),
+    role: v.optional(v.union(v.literal("user"), v.literal("admin"))),
+    trusted: v.optional(v.boolean()),
+  },
+
+  handler: async (ctx, args) => {
+    await requireAdmin(ctx);
+
+    const search = args.search?.trim();
+
+    const baseQuery = search
+      ? ctx.db
+          .query("users")
+          .withSearchIndex("search_users", (q) =>
+            q.search("searchText", search),
+          )
+      : ctx.db.query("users").withIndex("by_created_at");
+
+    const filteredQuery = baseQuery.filter((q) =>
+      q.and(
+        ...(args.role ? [q.eq(q.field("role"), args.role)] : []),
+        ...(args.trusted !== undefined
+          ? [q.eq(q.field("isTrusted"), args.trusted)]
+          : []),
+      ),
+    );
+
+    const results = await filteredQuery.paginate(args.paginationOpts);
+
+    const page = await Promise.all(
+      results.page.map(async (user) => ({
+        _id: user._id,
+        name: user.name ?? "LendLoop member",
+        email: user.email ?? "",
+        role: user.role,
+        isTrusted: user.isTrusted ?? false,
+        createdAt: user.createdAt,
+      })),
+    );
+
+    return { ...results, page };
   },
 });
