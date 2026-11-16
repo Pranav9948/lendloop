@@ -1,0 +1,756 @@
+{
+  "name": "LENDLOOP -N8N- Request Notifications",
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [0, 0],
+      "id": "fa85aad5-5808-48b3-8d04-8e81a61eb0e9",
+      "name": "When clicking ‘Execute workflow’"
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "lendloop-events",
+        "responseMode": "responseNode",
+        "options": {
+          "rawBody": true
+        }
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [208, 0],
+      "id": "2e25ec59-5834-470b-ac70-310d74b7cc1b",
+      "name": "Webhook",
+      "webhookId": "08f68c3c-5597-4592-a8cd-cf143b84f9bb"
+    },
+    {
+      "parameters": {
+        "jsCode": "\nconst crypto = require(\"crypto\");\n\nconst items = $input.all();\n\nif (items.length !== 1) {\n  return [{\n    json: {\n      valid: false,\n      reason: \"Expected exactly one webhook request.\"\n    }\n  }];\n}\n\nconst item = items[0];\nconst headers = item.json.headers ?? {};\n\n// Read the HMAC secret from the n8n environment\nconst secretHex = $env.LENDLOOP_HMAC_SECRET;\n\nif (\n  typeof secretHex !== \"string\" ||\n  !/^[0-9a-f]{64}$/i.test(secretHex)\n) {\n  return [{\n    json: {\n      valid: false,\n      reason: \"Invalid secret configuration.\"\n    }\n  }];\n}\n\n// Read authentication headers\nconst timestampHeader = headers[\"x-lendloop-timestamp\"];\nconst receivedSignature = headers[\"x-lendloop-signature\"];\n\nif (\n  typeof timestampHeader !== \"string\" ||\n  !/^\\d+$/.test(timestampHeader)\n) {\n  return [{\n    json: {\n      valid: false,\n      reason: \"Invalid timestamp.\"\n    }\n  }];\n}\n\nconst timestamp = Number(timestampHeader);\nconst currentTime = Math.floor(Date.now() / 1000);\n\nif (\n  !Number.isSafeInteger(timestamp) ||\n  Math.abs(currentTime - timestamp) > 300\n) {\n  return [{\n    json: {\n      valid: false,\n      reason: \"Expired or invalid timestamp.\"\n    }\n  }];\n}\n\nif (\n  typeof receivedSignature !== \"string\" ||\n  !/^[0-9a-f]{64}$/i.test(receivedSignature)\n) {\n  return [{\n    json: {\n      valid: false,\n      reason: \"Invalid signature format.\"\n    }\n  }];\n}\n\n// Read the original body from the Webhook binary property.\n// The Webhook node screenshot showed this property as \"data\".\nconst rawBody = await this.helpers.getBinaryDataBuffer(0, \"data\");\n\n// Convert secret from hexadecimal to bytes\nconst secret = Buffer.from(secretHex, \"hex\");\n\n// Calculate expected HMAC\nconst expectedSignature = crypto\n  .createHmac(\"sha256\", secret)\n  .update(`${timestampHeader}.`, \"utf8\")\n  .update(rawBody)\n  .digest();\n\nconst receivedSignatureBuffer = Buffer.from(\n  receivedSignature,\n  \"hex\"\n);\n\nif (\n  !crypto.timingSafeEqual(\n    expectedSignature,\n    receivedSignatureBuffer\n  )\n) {\n  return [{\n    json: {\n      valid: false,\n      reason: \"Signature verification failed.\"\n    }\n  }];\n}\n\n// Parse only after successful signature verification\nlet payload;\n\ntry {\n  payload = JSON.parse(rawBody.toString(\"utf8\"));\n} catch {\n  return [{\n    json: {\n      valid: false,\n      reason: \"Invalid JSON payload.\"\n    }\n  }];\n}\n\nreturn [{\n  json: {\n    valid: true,\n    event: payload.event\n  }\n}];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [432, -368],
+      "id": "4059a8a6-66de-41ae-8389-a9f41fddf9a7",
+      "name": "Verify HMAC Signature",
+      "alwaysOutputData": true,
+      "notesInFlow": false
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "45121f1a-3aaa-4189-a25e-147c04e9745f",
+              "leftValue": "={{ $json.valid }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [624, 0],
+      "id": "b511ce42-1541-4108-9c5f-617c656fa925",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { \"success\": true, \"message\": \"Webhook authenticated successfully\" } }}",
+        "options": {
+          "responseCode": 200
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [1328, -304],
+      "id": "4da0b4f4-38bb-46fd-ad8d-cc276e31ef0d",
+      "name": "Accept Request"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { \"success\": false, \"message\": \"Webhook authentication failed\" } }}",
+        "options": {
+          "responseCode": 401
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [1040, 96],
+      "id": "4138b9fa-d3f7-46a2-a2e6-d538208a5894",
+      "name": "Respond to Webhook"
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $('Verify HMAC Signature').first().json.event.eventType }}",
+                    "rightValue": "request_created",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "id": "34adfb8e-a74b-493f-b19c-33fe37d89a0a"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "1c022aab-8ef0-47f1-926a-6e5df38bad83",
+                    "leftValue": "={{ $('Verify HMAC Signature').first().json.event.eventType }}",
+                    "rightValue": "request_approved",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "742f8141-4fff-4007-b583-dd8a55f634d1",
+                    "leftValue": "={{ $('Verify HMAC Signature').first().json.event.eventType }}",
+                    "rightValue": "request_declined",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "3188731e-78bf-4f23-a56c-2f0d874badc0",
+                    "leftValue": "={{ $('Verify HMAC Signature').first().json.event.eventType }}",
+                    "rightValue": "overdue_reminder",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.4,
+      "position": [1456, -96],
+      "id": "4d6457a0-d4d6-4e37-8109-2641ef808525",
+      "name": "Switch"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "94bc149a-c66f-433b-942d-5ebd64271561",
+              "name": "notificationType",
+              "value": "new_borrow_request",
+              "type": "string"
+            },
+            {
+              "id": "341451a8-cf01-4276-a914-3967b8602d80",
+              "name": "=recipientUserId",
+              "value": "={{ $('Verify HMAC Signature').first().json.event.recipient.userId }}",
+              "type": "string"
+            },
+            {
+              "id": "d30f85ba-306e-40eb-a8b1-ad5f67d4a54d",
+              "name": "recipientName",
+              "value": "={{ $('Verify HMAC Signature').first().json.event.recipient.name }}",
+              "type": "string"
+            },
+            {
+              "id": "bd0e0c34-2424-4d16-b0fd-3258e7ebdc0c",
+              "name": "recipientEmail",
+              "value": "={{ $('Verify HMAC Signature').first().json.event.recipient.email }}",
+              "type": "string"
+            },
+            {
+              "id": "c4b370f6-2dd7-485a-8563-4fa4bb144e91",
+              "name": "toolName",
+              "value": "={{ $('Verify HMAC Signature').first().json.event.toolName }}",
+              "type": "string"
+            },
+            {
+              "id": "e53f2f15-bf70-4473-93c1-fc8c68a0c7de",
+              "name": "startDate",
+              "value": "={{ $('Verify HMAC Signature').first().json.event.request.startDate }}",
+              "type": "string"
+            },
+            {
+              "id": "f93ce39c-3ee3-403d-aab1-27704dd0abe7",
+              "name": "endDate",
+              "value": "={{ $('Verify HMAC Signature').first().json.event.request.endDate }}",
+              "type": "string"
+            },
+            {
+              "id": "daeb9eb9-f20f-4957-a442-7e88065ca3c1",
+              "name": "message",
+              "value": "={{ \"Someone has requested to borrow your \" + $('Verify HMAC Signature').first().json.event.toolName + \".\" }}",
+              "type": "string"
+            },
+            {
+              "id": "fe117128-460f-4bae-9798-b2f8e9d74121",
+              "name": "eventId",
+              "value": "={{ $('Verify HMAC Signature').first().json.event.eventId }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [1680, -288],
+      "id": "c31156c2-f384-4e88-a5dc-567fd458c6ae",
+      "name": "Prepare New Request Notification"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "157bf559-5386-4342-8080-b8ca5864f164",
+              "name": "notificationType",
+              "value": "request_approved",
+              "type": "string"
+            },
+            {
+              "id": "f5fec1c6-d8a5-4919-a9d7-67fc55aca6f0",
+              "name": "recipientUserId",
+              "value": "={{ $('Verify HMAC Signature').first().json.event.recipient.userId }}",
+              "type": "string"
+            },
+            {
+              "id": "1d06f63f-50f4-4e28-a5ad-7802c9ff1e80",
+              "name": "recipientName",
+              "value": "={{ $('Verify HMAC Signature').first().json.event.recipient.name }}",
+              "type": "string"
+            },
+            {
+              "id": "e86d127b-07bd-4e76-87b0-eb547c3cad6f",
+              "name": "recipientEmail",
+              "value": "={{ $('Verify HMAC Signature').first().json.event.recipient.email }}",
+              "type": "string"
+            },
+            {
+              "id": "f93083cc-107d-46db-8f58-43b1d20eec0e",
+              "name": "toolName",
+              "value": "={{ $('Verify HMAC Signature').first().json.event.toolName }}",
+              "type": "string"
+            },
+            {
+              "id": "9c0ef60e-5072-452e-b48c-f1b1d8fb7d3e",
+              "name": "message",
+              "value": "={{ \"Your borrowing request for \" + $('Verify HMAC Signature').first().json.event.toolName + \" has been approved.\" }}",
+              "type": "string"
+            },
+            {
+              "id": "ebf28bf7-4a77-4b17-a5fe-56b2971f8597",
+              "name": "eventId",
+              "value": "={{ $('Verify HMAC Signature').first().json.event.eventId }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [1808, -160],
+      "id": "501948f9-035a-4e54-9b25-5eba2ee6bc88",
+      "name": "Prepare Approved Request Notification1"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "d4126c49-20be-44f4-b761-2ebc6e9598cd",
+              "name": "notificationType",
+              "value": "request_declined",
+              "type": "string"
+            },
+            {
+              "id": "fa5bfae6-27c5-4840-9bb6-3420cf401173",
+              "name": "recipientUserId",
+              "value": "={{ $('Verify HMAC Signature').first().json.event.recipient.userId }}",
+              "type": "string"
+            },
+            {
+              "id": "0d2b7e7d-e741-401a-bdd9-262da6d39301",
+              "name": "recipientName",
+              "value": "={{ $('Verify HMAC Signature').first().json.event.recipient.name }}",
+              "type": "string"
+            },
+            {
+              "id": "1e47a9b0-4a4a-4d2c-80f3-7396cb083b86",
+              "name": "recipientEmail",
+              "value": "={{ $('Verify HMAC Signature').first().json.event.recipient.email }}",
+              "type": "string"
+            },
+            {
+              "id": "5d219600-07bc-4c2f-91d0-8068e8051ea7",
+              "name": "toolName",
+              "value": "={{ $('Verify HMAC Signature').first().json.event.toolName }}",
+              "type": "string"
+            },
+            {
+              "id": "98aec10f-c56c-42b7-95f5-d71df8075437",
+              "name": "message",
+              "value": "={{ \"Your borrowing request for \" + $('Verify HMAC Signature').first().json.event.toolName + \" has been declined.\" }}",
+              "type": "string"
+            },
+            {
+              "id": "c8477d85-082d-4140-aee0-3cb4755bb87e",
+              "name": "eventId",
+              "value": "={{ $('Verify HMAC Signature').first().json.event.eventId }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [1952, 16],
+      "id": "62b0255e-9503-41b3-908c-6b2dda508dcc",
+      "name": "Prepare Declined Request Notification"
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all();\n\nreturn items.map(({ json }) => ({\n  json: {\n    loggedAt: new Date().toISOString(),\n    channel: \"mock\",\n    status: \"succeeded\",\n\n    eventId: json.eventId,\n    notificationType: json.notificationType,\n    reminderStage: json.reminderStage,\n\n    recipientUserId: json.recipientUserId,\n    recipientName: json.recipientName,\n    recipientEmail: json.recipientEmail,\n\n    toolName: json.toolName,\n    message: json.message,\n  },\n}));"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [2176, -208],
+      "id": "14221f0e-d254-4331-9b4e-e5b1cb62ca26",
+      "name": "Mock Notification Log"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://silent-swordfish-88.convex.site/automation/notification-result",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "eventId",
+              "value": "={{ $('Verify HMAC Signature').first().json.event.eventId }}"
+            },
+            {
+              "name": "status",
+              "value": "={{ $('Mock Notification Log').first().json.status }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [2352, -192],
+      "id": "9070fce8-6728-4aea-9f97-bc918645f340",
+      "name": "Report Notification Result to Convex.",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "y5Xjw7UPhQZqxoAf",
+          "name": "Header Auth account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://silent-swordfish-88.convex.site/automation/claim-event",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "eventId",
+              "value": "={{ $('Verify HMAC Signature').first().json.event.eventId }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [784, -240],
+      "id": "6a5ac356-27fa-429c-9b82-f08e8b4f1140",
+      "name": "Claim Event in Convex",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "y5Xjw7UPhQZqxoAf",
+          "name": "Header Auth account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "2427242b-a288-484a-a1b8-0fb8e5ac3c49",
+              "leftValue": "={{ $json.accepted }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [992, -240],
+      "id": "3c8450a3-3a54-4303-8c8e-58e50e354b0e",
+      "name": "If1"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "{\n  \"received\": true,\n  \"duplicate\": true,\n  \"message\": \"Event was already processed or is currently being processed.\"\n}",
+        "options": {
+          "responseCode": 200
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [1168, -96],
+      "id": "d13bd72d-790e-49ee-8b8e-40f347aaf05b",
+      "name": "Respond to Webhook1"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "94244845-8fdd-42c0-a671-91511d94153c",
+              "name": "notificationType",
+              "value": "overdue_reminder",
+              "type": "string"
+            },
+            {
+              "id": "9b82d92f-0533-4ee6-a58e-fffc67fdf278",
+              "name": "recipientUserId",
+              "value": "={{ $('Verify HMAC Signature').first().json.event.recipient.userId }}",
+              "type": "string"
+            },
+            {
+              "id": "68a9bff1-a346-4a85-83b1-0d67262de427",
+              "name": "recipientName",
+              "value": "={{ $('Verify HMAC Signature').first().json.event.recipient.name }}",
+              "type": "string"
+            },
+            {
+              "id": "7fb69eb6-d8f3-4cd8-b6b7-7a35ed3d9a7f",
+              "name": "recipientEmail",
+              "value": "={{ $('Verify HMAC Signature').first().json.event.recipient.email }}",
+              "type": "string"
+            },
+            {
+              "id": "575b8bd7-bc65-4e91-9369-add45386a65e",
+              "name": "toolName",
+              "value": "={{ $('Verify HMAC Signature').first().json.event.toolName }}",
+              "type": "string"
+            },
+            {
+              "id": "ed0dd870-d176-49b4-ad13-ce45aa9c7562",
+              "name": "dueDate",
+              "value": "={{ $('Verify HMAC Signature').first().json.event.loan.dueDate }}",
+              "type": "string"
+            },
+            {
+              "id": "cb24c1b2-a695-460b-bab0-1d2085355e19",
+              "name": "=message",
+              "value": "={{\n  (() => {\n    const event = $('Verify HMAC Signature').first().json.event;\n\n    if (event.reminderStage === 'day_1') {\n      return `Friendly reminder: Your borrowing period for ${event.toolName} has ended. Please arrange its return.`;\n    }\n\n    if (event.reminderStage === 'day_3') {\n      return `Follow-up reminder: ${event.toolName} is still overdue. Please return it as soon as possible.`;\n    }\n\n    if (event.reminderStage === 'day_7') {\n      return `Final reminder: ${event.toolName} is now 7 days overdue. Please contact the lender and arrange its return.`;\n    }\n\n    throw new Error('Unknown overdue reminder stage');\n  })()\n}}",
+              "type": "string"
+            },
+            {
+              "id": "435f1302-031d-44c2-9f41-5a2d649def07",
+              "name": "eventId",
+              "value": "={{ $('Verify HMAC Signature').first().json.event.eventId }}",
+              "type": "string"
+            },
+            {
+              "id": "f15e9900-287a-41dd-9781-f28c6ca70752",
+              "name": "reminderStage",
+              "value": "={{ $('Verify HMAC Signature').first().json.event.reminderStage }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [1936, 336],
+      "id": "a06349a9-cdd5-44f6-947b-bb110217f8b4",
+      "name": "Prepare Overdue Reminder Notification"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When clicking ‘Execute workflow’": {
+      "main": [[]]
+    },
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Verify HMAC Signature",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Verify HMAC Signature": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Claim Event in Convex",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Accept Request": {
+      "main": [
+        [
+          {
+            "node": "Switch",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Switch": {
+      "main": [
+        [
+          {
+            "node": "Prepare New Request Notification",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Prepare Approved Request Notification1",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Prepare Declined Request Notification",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Prepare Overdue Reminder Notification",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Approved Request Notification1": {
+      "main": [
+        [
+          {
+            "node": "Mock Notification Log",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare New Request Notification": {
+      "main": [
+        [
+          {
+            "node": "Mock Notification Log",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Declined Request Notification": {
+      "main": [
+        [
+          {
+            "node": "Mock Notification Log",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Mock Notification Log": {
+      "main": [
+        [
+          {
+            "node": "Report Notification Result to Convex.",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Claim Event in Convex": {
+      "main": [
+        [
+          {
+            "node": "If1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If1": {
+      "main": [
+        [
+          {
+            "node": "Accept Request",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond to Webhook1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Overdue Reminder Notification": {
+      "main": [
+        [
+          {
+            "node": "Mock Notification Log",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "c76f2af4-5e52-4e88-8470-ee30ed9ccb1b",
+  "meta": {
+    "instanceId": "fbdf09646994bdadf6173180525fd392130c385d264f110328bc6cf41ae33704"
+  },
+  "id": "562QXYjoucyKhxAm",
+  "tags": []
+}

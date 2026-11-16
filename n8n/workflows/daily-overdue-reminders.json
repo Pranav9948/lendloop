@@ -1,0 +1,274 @@
+{
+  "name": "LendLoop - Daily Overdue Reminders",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "triggerAtHour": 9
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        0,
+        0
+      ],
+      "id": "440ec122-53da-421a-b2f1-884750eca288",
+      "name": "Schedule Trigger"
+    },
+    {
+      "parameters": {
+        "jsCode": "const crypto = require(\"crypto\");\n\nconst timestamp = Math.floor(Date.now() / 1000);\n\nconst body = {\n  action: \"generate\",\n};\n\nconst rawBody = JSON.stringify(body);\n\nconst secret = $env.LENDLOOP_HMAC_SECRET;\n\nif (!secret || !/^[0-9a-f]{64}$/i.test(secret)) {\n  throw new Error(\"Missing or invalid LENDLOOP_HMAC_SECRET\");\n}\n\nconst signature = crypto\n  .createHmac(\"sha256\", Buffer.from(secret, \"hex\"))\n  .update(`${timestamp}.${rawBody}`, \"utf8\")\n  .digest(\"hex\");\n\nreturn [\n  {\n    json: {\n      timestamp: String(timestamp),\n      signature,\n      rawBody,\n    },\n  },\n];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        208,
+        0
+      ],
+      "id": "c17032a0-4a66-4517-85f3-7b4b28d4df97",
+      "name": "Code in JavaScript"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://silent-swordfish-88.convex.site/automation/overdue-reminders",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "X-LendLoop-Timestamp",
+              "value": "={{$json.timestamp}}"
+            },
+            {
+              "name": "X-LendLoop-Signature",
+              "value": "={{$json.signature}}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "application/json",
+        "body": "={{$json.rawBody}}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        416,
+        0
+      ],
+      "id": "cb91b64b-9c9e-4a25-bd37-dbedcc129818",
+      "name": "HTTP Request"
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "reminders",
+        "include": "allOtherFields",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [
+        624,
+        0
+      ],
+      "id": "f952595b-32d2-4c2e-91f8-bc3414ba9f38",
+      "name": "Split Out"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://silent-swordfish-88.convex.site/automation/claim-event",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "Authorization",
+              "value": "Bearer 5aded1058de2a314f923cfa0d3b5c07cbca33d8afd05aaebbba6580a5162e3f7"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "eventId",
+              "value": "={{ $json.reminders.eventId }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        832,
+        0
+      ],
+      "id": "0bc69a4b-b39c-4f48-93c4-44148cda4aa0",
+      "name": "Claim Event in Convex"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "9804499b-0472-40e0-b541-a72f30025cfe",
+              "leftValue": "={{$json.accepted}}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        1040,
+        0
+      ],
+      "id": "7fa53cfd-e924-44e0-ac35-3bc8f9d0dfa4",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://silent-swordfish-88.convex.site/automation/overdue-reminder-result",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "Authorization",
+              "value": "Bearer 5aded1058de2a314f923cfa0d3b5c07cbca33d8afd05aaebbba6580a5162e3f7"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "=json",
+        "bodyParameters": {
+          "parameters": [
+            {}
+          ]
+        },
+        "jsonBody": "={{\n  {\n    eventId: $('Split Out').item.json.eventId,\n    status: 'succeeded'\n  }\n}}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        1248,
+        -96
+      ],
+      "id": "d7584960-539f-4836-8acb-92bed71ecafe",
+      "name": "Report Overdue Reminder Result"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "Split Out",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split Out": {
+      "main": [
+        [
+          {
+            "node": "Claim Event in Convex",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Claim Event in Convex": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Report Overdue Reminder Result",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "ba0dabd0-1de5-4d9d-ae3d-1f85e935b6c3",
+  "meta": {
+    "instanceId": "fbdf09646994bdadf6173180525fd392130c385d264f110328bc6cf41ae33704"
+  },
+  "id": "bsKC6JTqvhhdy0XN",
+  "tags": []
+}
