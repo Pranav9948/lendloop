@@ -7,6 +7,17 @@ const nextConfig: NextConfig = {
   },
   cacheComponents: true,
   partialPrefetching: true,
+
+  images: {
+    remotePatterns: [
+      {
+        protocol: "https",
+        hostname: "silent-swordfish-88.convex.cloud",
+        pathname: "/api/storage/**",
+      },
+    ],
+  },
+
   turbopack: {
     rules: {
       "*.css": {

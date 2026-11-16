@@ -353,7 +353,7 @@ export default function AllToolsPage() {
             />
           </div>
         ) : (
-          <div className="grid grid-cols-1 gap-x-5 gap-y-8 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          <div className="grid grid-cols-1 gap-x-5 gap-y-8 sm:grid-cols-2 lg:grid-cols-3">
             {paginatedTools.map((tool) => {
               const isSelected = selectedToolId === tool._id;
               const isOwner = currentUser?._id === tool.ownerId;
@@ -361,7 +361,7 @@ export default function AllToolsPage() {
               return (
                 <article
                   key={tool._id}
-                  className="group min-w-0"
+                  className="group flex h-full min-w-0 flex-col p-5 rounded-xl bg-white shadow-md "
                 >
                   {/* Product image */}
                   <div className="relative aspect-[4/3] overflow-hidden rounded-xl bg-[#f3f5f1]">
@@ -395,14 +395,14 @@ export default function AllToolsPage() {
                   </div>
 
                   {/* Product information */}
-                  <div className="pt-4">
+                  <div className="flex flex-1 flex-col pt-4">
                     <div className="flex items-start justify-between gap-3">
-                      <h3 className="text-base font-semibold tracking-tight text-[#20352b] transition-colors group-hover:text-[#167a5b]">
+                      <h3 className="min-h-[3rem] line-clamp-2 text-base font-semibold leading-6 tracking-tight text-[#20352b] transition-colors group-hover:text-[#167a5b]">
                         {tool.name}
                       </h3>
                     </div>
 
-                    <p className="mt-1.5 line-clamp-2 min-h-10 text-xs leading-5 text-[#879389]">
+                    <p className="  min-h-10 text-xs leading-5 text-[#879389]">
                       {tool.description}
                     </p>
 
@@ -419,12 +419,12 @@ export default function AllToolsPage() {
 
 
 
-                    <div className="mt-4">
+                    <div className="mt-auto pt-4">
 
 
                       {/* Borrow option - only for other users' listings */}
                       {!isOwner ? (
-                        <div className="mt-4">
+                        <div>
                           {!isSelected ? (
                             <button
                               type="button"
@@ -546,69 +546,72 @@ export default function AllToolsPage() {
               );
             })}
           </div>
-        )}
+        )
+        }
 
-        {filteredTools.length > PAGE_SIZE && (
-          <div className="mt-10 flex flex-col gap-4 border-t border-[#e9eee8] pt-6 sm:flex-row sm:items-center sm:justify-between">
-            <p className="text-xs text-[#879389]">
-              Showing{" "}
-              <span className="font-semibold text-[#20352b]">
-                {(currentPage - 1) * PAGE_SIZE + 1}
-              </span>
-              {" – "}
-              <span className="font-semibold text-[#20352b]">
-                {Math.min(
-                  currentPage * PAGE_SIZE,
-                  filteredTools.length,
-                )}
-              </span>
-              {" of "}
-              <span className="font-semibold text-[#20352b]">
-                {filteredTools.length}
-              </span>{" "}
-              tools
-            </p>
+        {
+          filteredTools.length > PAGE_SIZE && (
+            <div className="mt-10 flex flex-col gap-4 border-t border-[#e9eee8] pt-6 sm:flex-row sm:items-center sm:justify-between">
+              <p className="text-xs text-[#879389]">
+                Showing{" "}
+                <span className="font-semibold text-[#20352b]">
+                  {(currentPage - 1) * PAGE_SIZE + 1}
+                </span>
+                {" – "}
+                <span className="font-semibold text-[#20352b]">
+                  {Math.min(
+                    currentPage * PAGE_SIZE,
+                    filteredTools.length,
+                  )}
+                </span>
+                {" of "}
+                <span className="font-semibold text-[#20352b]">
+                  {filteredTools.length}
+                </span>{" "}
+                tools
+              </p>
 
-            <div className="flex items-center justify-between gap-2 sm:justify-end">
-              <button
-                type="button"
-                disabled={currentPage === 1}
-                onClick={() =>
-                  setCurrentPage((page) => Math.max(1, page - 1))
-                }
-                className="flex h-10 items-center gap-1 rounded-lg border border-[#e4eae3] bg-white px-4 text-xs font-semibold text-[#52675a] transition hover:bg-[#f3f7f2] disabled:cursor-not-allowed disabled:opacity-40"
-              >
-                <span>←</span>
-                Previous
-              </button>
+              <div className="flex items-center justify-between gap-2 sm:justify-end">
+                <button
+                  type="button"
+                  disabled={currentPage === 1}
+                  onClick={() =>
+                    setCurrentPage((page) => Math.max(1, page - 1))
+                  }
+                  className="flex h-10 items-center gap-1 rounded-lg border border-[#e4eae3] bg-white px-4 text-xs font-semibold text-[#52675a] transition hover:bg-[#f3f7f2] disabled:cursor-not-allowed disabled:opacity-40"
+                >
+                  <span>←</span>
+                  Previous
+                </button>
 
-              <span className="min-w-16 text-center text-xs font-semibold text-[#52675a]">
-                {currentPage} / {totalPages}
-              </span>
+                <span className="min-w-16 text-center text-xs font-semibold text-[#52675a]">
+                  {currentPage} / {totalPages}
+                </span>
 
-              <button
-                type="button"
-                disabled={currentPage === totalPages}
-                onClick={() =>
-                  setCurrentPage((page) =>
-                    Math.min(totalPages, page + 1),
-                  )
-                }
-                className="flex h-10 items-center gap-1 rounded-lg border border-[#e4eae3] bg-white px-4 text-xs font-semibold text-[#52675a] transition hover:bg-[#f3f7f2] disabled:cursor-not-allowed disabled:opacity-40"
-              >
-                Next
-                <span>→</span>
-              </button>
+                <button
+                  type="button"
+                  disabled={currentPage === totalPages}
+                  onClick={() =>
+                    setCurrentPage((page) =>
+                      Math.min(totalPages, page + 1),
+                    )
+                  }
+                  className="flex h-10 items-center gap-1 rounded-lg border border-[#e4eae3] bg-white px-4 text-xs font-semibold text-[#52675a] transition hover:bg-[#f3f7f2] disabled:cursor-not-allowed disabled:opacity-40"
+                >
+                  Next
+                  <span>→</span>
+                </button>
+              </div>
             </div>
-          </div>
-        )}
-      </section>
+          )
+        }
+      </section >
 
       {/* Bottom message */}
-      <div className="flex items-center justify-center gap-2 border-t border-[#edf0eb] pt-7 text-xs text-[#929e93]">
+      < div className="flex items-center justify-center gap-2 border-t border-[#edf0eb] pt-7 text-xs text-[#929e93]" >
         <ShieldCheck size={14} className="text-[#167a5b]" />
-        Share responsibly. Return things with care.
-      </div>
-    </div>
+        Share responsibly.Return things with care.
+      </div >
+    </div >
   );
 }

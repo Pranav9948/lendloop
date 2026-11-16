@@ -369,6 +369,7 @@ export const getPaginatedTools = query({
             ? {
                 name: owner.name ?? "LendLoop member",
                 email: owner.email,
+                _id: owner._id,
               }
             : null,
         };
