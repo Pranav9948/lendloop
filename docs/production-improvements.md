@@ -1,37 +1,17 @@
-# LendLoop — Production Improvements
+# What I Would Improve Before Taking LendLoop to Production
 
-## 1. Security
+LendLoop covers the core borrowing workflow, but there are a few areas I would focus on before making it available to a larger number of users.
 
-- Strengthen backend RBAC and resource ownership checks.
-- Improve input validation and rate limiting.
-- Verify webhook signatures and replay protection.
-- Securely manage and rotate application secrets.
+First, I would spend more time strengthening security, especially backend permission checks, tool ownership validation and input validation. I would also add rate limiting to protect important endpoints.
 
-## 2. Reliability
+I would improve the borrowing process to handle situations where multiple users try to request or borrow the same tool at the same time. Preventing overlapping bookings and keeping loan records consistent would be important.
 
-- Add automated tests for critical business operations.
-- Handle concurrent borrowing requests.
-- Improve error handling and recovery mechanisms.
+For the n8n workflows, I would add better retry and failure-handling mechanisms so that failed notifications or overdue reminders can be recovered without processing the same event twice.
 
-## 3. Automation
+I would also introduce proper logging, error monitoring and alerts to make it easier to identify and investigate problems.
 
-- Implement retry handling for failed n8n workflows.
-- Prevent duplicate event processing.
-- Monitor webhook and automation failures.
+As usage grows, I would look at optimizing Convex queries, adding pagination where needed and monitoring application performance.
 
-## 4. Performance
+Finally, I would add more automated tests for critical workflows and establish a reliable backup and recovery process.
 
-- Optimize Convex queries and database indexes.
-- Add pagination for large datasets.
-- Improve frontend loading performance.
-
-## 5. Monitoring and Deployment
-
-- Introduce structured logging and error monitoring.
-- Add automated CI/CD checks.
-- Maintain staging and production environments.
-- Establish backup and recovery procedures.
-
-## 6. Conclusion
-
-Prioritize backend security, borrowing lifecycle integrity, webhook reliability and monitoring before expanding the platform.
+**My main priority would be to make sure the application is secure and reliable first, before focusing on scaling it further.**
