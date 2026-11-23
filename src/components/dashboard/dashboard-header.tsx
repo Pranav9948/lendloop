@@ -2,7 +2,7 @@
 "use client";
 
 import { UserButton } from "@clerk/nextjs";
-import { Menu, Search } from "lucide-react";
+import { Menu } from "lucide-react";
 import NotificationBell from "../notifications/NotificationBell";
 
 interface DashboardHeaderProps {
@@ -39,14 +39,6 @@ export function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
 
       {/* Right side */}
       <div className="flex items-center gap-3">
-
-        <button
-          type="button"
-          aria-label="Search"
-          className="flex size-10 items-center justify-center rounded-full text-[#718075] transition-colors hover:bg-[#f4f7f3] hover:text-[#167a5b]"
-        >
-          <Search size={19} strokeWidth={1.8} />
-        </button>
 
         {/* Notifications */}
         <NotificationBell />
